@@ -1,8 +1,8 @@
 package app.sunshine.aliniribeiro.com.sunshine;
 
+import android.app.Fragment;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,11 +16,15 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
  * A placeholder fragment containing a simple view.
  */
+
 public class ForecastFragment extends Fragment {
 
     public ForecastFragment() {
@@ -30,8 +34,6 @@ public class ForecastFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
 
-        //expandir a view
-        View rootView  = inflater.inflate(R.layout.fragment_main, container, false);
         //criar uma lista de array para representar a previsão do tempo
         String []forecastArray = {"Today - Sunny - 88/66", "Today - Sunny - 88/66", "Tomorrow - Foggy - 88/66",
                 "Tomorrow - Foggy - 88/66", "Weds - Cloudy - 72/63",  "Thurs - Rainny - 64/61", "Fri - Foggy - 70/46", "Set - Sunny - 88/66",
@@ -40,38 +42,46 @@ public class ForecastFragment extends Fragment {
                 "Tomorrow - Foggy - 88/66", "Weds - Cloudy - 72/63",  "Thurs - Rainny - 64/61", "Fri - Foggy - 70/46", "Set - Sunny - 88/66",
                 "Tomorrow - Foggy - 88/66", "Weds - Cloudy - 72/63",  "Thurs - Rainny - 64/61", "Fri - Foggy - 70/46", "Set - Sunny - 88/66"};
 
+        List<String> weekForecast = new ArrayList<String>(Arrays.asList(forecastArray));
+
         //crio o adaptador
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(
-                getActivity(),
+        ArrayAdapter<String> adapter = new ArrayAdapter <String>(
+              getActivity(),
                 R.layout.list_item_forecast,
                 forecastArray);
+
+        //expandir a viewx
+        View rootView  = inflater.inflate(R.layout.fragment_main, container, false);
 
         //crio a listview
         ListView listview  = (ListView) rootView.findViewById(R.id.listview_forecast);
         listview.setAdapter(adapter);
 
+
+
         return rootView;
     }
 
-    public class FetchWheatherCast extends AsyncTask<Void, Void, Void>{
+    public class FetchWheatherCast extends AsyncTask<Void, Void, Void> {
 
         private final String LOG_TAG = FetchWheatherCast.class.getSimpleName();
+
         @Override
         protected Void doInBackground(Void... params) {
 
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
-
             String forecastJsonStr = null;
 
             //Abre a url, faz o request, pega a resposta e desconecta:
             try {
-                String baseUrl = "http://api.openweathermap.org/data/2.5/forecast/daily?q=94043&mode=json&units=metric&cnt=7";
-                String apiKey = "&APPID=4fb9361470565d287266db654df62b12";
-                URL url  = new URL(baseUrl.concat(apiKey));
+                URL url = new URL("http://api.openweathermap.org/data/2.5/forecast/daily?q=94043&mode=json&units=metric&cnt=7");
+
+             //   String apiKey = "&APPID=4fb9361470565d287266db654df62b12";
+
 
                 // Cria o request para o OpenWeather e abre a conexão;
-                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection = (HttpURLConnection)  url.openConnection();
                 urlConnection.setRequestMethod("GET");
                 urlConnection.connect();
 
