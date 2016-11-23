@@ -5,6 +5,9 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -28,6 +31,32 @@ import java.util.List;
 public class ForecastFragment extends Fragment {
 
     public ForecastFragment() {
+    }
+
+    //Utilizamos o setHasOptionsMenu para indicar que queremos callbacks dos métodos.
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Add this line in order for this fragment to handle menu events.
+        setHasOptionsMenu(true);
+    }
+
+    //Chamamos para inflar o menu que criamos:forecastfragment.xml
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.forecastfragment, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item){
+        int id = item.getItemId();
+        //Se o item do menu é selecionado, instanciamos a nossa classe FetchWheatherCast e a executamos.
+        if (id == R.id.action_refresh) {
+            FetchWeatherCast weatherCast = new FetchWeatherCast();
+            weatherCast.execute();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -62,9 +91,9 @@ public class ForecastFragment extends Fragment {
         return rootView;
     }
 
-    public class FetchWheatherCast extends AsyncTask<Void, Void, Void> {
+    public class FetchWeatherCast extends AsyncTask<Void, Void, Void> {
 
-        private final String LOG_TAG = FetchWheatherCast.class.getSimpleName();
+        private final String LOG_TAG = FetchWeatherCast.class.getSimpleName();
 
         @Override
         protected Void doInBackground(Void... params) {
@@ -75,9 +104,9 @@ public class ForecastFragment extends Fragment {
 
             //Abre a url, faz o request, pega a resposta e desconecta:
             try {
-                URL url = new URL("http://api.openweathermap.org/data/2.5/forecast/daily?q=94043&mode=json&units=metric&cnt=7");
-
-             //   String apiKey = "&APPID=4fb9361470565d287266db654df62b12";
+                String baseUrl = "http://api.openweathermap.org/data/2.5/forecast/daily?q=94043&mode=json&units=metric&cnt=7";
+                String apiKey = "&APPID=4fb9361470565d287266db654df62b12";
+                URL url = new URL(baseUrl.concat(apiKey));
 
 
                 // Cria o request para o OpenWeather e abre a conexão;
@@ -102,6 +131,8 @@ public class ForecastFragment extends Fragment {
                     return null;
                 }
                 forecastJsonStr = buffer.toString();
+                Log.v(LOG_TAG, "Forecast JSON String: "+ forecastJsonStr);
+
             } catch (java.io.IOException e) {
                 Log.e(LOG_TAG, "Error ", e);
                 return null;
