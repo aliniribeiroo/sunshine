@@ -14,6 +14,10 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +26,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Locale;
 
 
 /**
@@ -30,6 +37,9 @@ import java.util.List;
  */
 
 public class ForecastFragment extends Fragment {
+
+    private String forecastJsonStr = null;
+    private ArrayAdapter<String> mForecastAdapter;
 
     public ForecastFragment() {
     }
@@ -75,35 +85,111 @@ public class ForecastFragment extends Fragment {
         List<String> weekForecast = new ArrayList<String>(Arrays.asList(forecastArray));
 
         //crio o adaptador
-        ArrayAdapter<String> adapter = new ArrayAdapter <String>(
+         mForecastAdapter = new ArrayAdapter<String>(
               getActivity(),
                 R.layout.list_item_forecast,
-                forecastArray);
+                 weekForecast);
 
-        //expandir a viewx
+        //expandir a view
         View rootView  = inflater.inflate(R.layout.fragment_main, container, false);
 
         //crio a listview
         ListView listview  = (ListView) rootView.findViewById(R.id.listview_forecast);
-        listview.setAdapter(adapter);
-
-
+        listview.setAdapter(mForecastAdapter);
 
         return rootView;
     }
 
-    public class FetchWeatherCast extends AsyncTask<String, Void, Void> {
+    public class FetchWeatherCast extends AsyncTask<String, Void, String[]> {
 
         private final String LOG_TAG = FetchWeatherCast.class.getSimpleName();
 
         @Override
-        public Void doInBackground(String... params) {
+        protected void onPostExecute(String[] strings) {
+            if (strings != null) {
+                mForecastAdapter.clear();
+                for (String dayForecastStr : strings) {
+                    mForecastAdapter.add(dayForecastStr);
+                }
+            }
+        }
+
+        /**
+         * Método para arredondar as temperaturas
+         */
+        private String formatHighLows(double high, double low) {
+            // For presentation, assume the user doesn't care about tenths of a degree.
+            long roundedHigh = Math.round(high);
+            long roundedLow = Math.round(low);
+
+            String highLowStr = roundedHigh + "/" + roundedLow;
+            return highLowStr;
+        }
+
+        /**
+         * Método para transformar o String Json da Api em um array com as temperaturas
+         */
+        private String[] getWeatherDataFromJson(String forecastJsonStr, int numDays) throws JSONException {
+
+            // These are the names of the JSON objects that need to be extracted.
+            final String OWM_LIST = "list";
+            final String OWM_WEATHER = "weather";
+            final String OWM_TEMPERATURE = "temp";
+            final String OWM_MAX = "max";
+            final String OWM_MIN = "min";
+            final String OWM_DESCRIPTION = "main";
+
+            JSONObject forecastJson = new JSONObject(forecastJsonStr);
+            JSONArray weatherArray = forecastJson.getJSONArray(OWM_LIST);
+
+            //Usamos calendário Gregoriano para pegar a data
+            Calendar dayTime = new GregorianCalendar();
+
+            String[] resultStrs = new String[numDays];
+            for(int i = 0; i < weatherArray.length(); i++) {
+                // For now, using the format "Day, description, hi/low"
+                String day;
+                String description;
+                String highAndLow;
+
+                // Pegamos o Json que representa o dia
+                JSONObject dayForecast = weatherArray.getJSONObject(i);
+
+                // convertemos valor integer que retornou do Calendar.DAY_OF_WEEK para uma String
+                day = dayTime.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.ENGLISH);
+
+                dayTime.add(Calendar.DAY_OF_WEEK, 1);
+
+                // description is in a child array called "weather", which is 1 element long.
+                JSONObject weatherObject = dayForecast.getJSONArray(OWM_WEATHER).getJSONObject(0);
+                description = weatherObject.getString(OWM_DESCRIPTION);
+
+                // Temperatures are in a child object called "temp".  Try not to name variables
+                // "temp" when working with temperature.  It confuses everybody.
+                JSONObject temperatureObject = dayForecast.getJSONObject(OWM_TEMPERATURE);
+                double high = temperatureObject.getDouble(OWM_MAX);
+                double low = temperatureObject.getDouble(OWM_MIN);
+
+                highAndLow = formatHighLows(high, low);
+                resultStrs[i] = day + " - " + description + " - " + highAndLow;
+            }
+
+            for (String s : resultStrs) {
+                Log.v(LOG_TAG, "Forecast entry: " + s);
+            }
+            return resultStrs;
+
+        }
+
+        @Override
+        public String[] doInBackground(String... params) {
 
 
             // If there's no zip code, there's nothing to look up.  Verify size of params.
             if (params.length == 0) {
                 return null;
             }
+
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
             String forecastJsonStr = null;
@@ -172,7 +258,15 @@ public class ForecastFragment extends Fragment {
                     }
                 }
             }
-            return null;
+
+          try {
+              return getWeatherDataFromJson(forecastJsonStr, numDays);
+          }catch (JSONException e){
+              Log.e(LOG_TAG,e.getMessage(),e);
+              e.printStackTrace();
+          }
+          // Apenas retornamos null caso ocorra algum erro.
+          return null;
         }
     }
 }
