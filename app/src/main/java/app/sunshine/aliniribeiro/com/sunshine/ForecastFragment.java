@@ -31,11 +31,6 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
 
-
-/**
- * A placeholder fragment containing a simple view.
- */
-
 public class ForecastFragment extends Fragment {
 
     private String forecastJsonStr = null;
@@ -48,7 +43,6 @@ public class ForecastFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(true);
     }
 
@@ -118,7 +112,6 @@ public class ForecastFragment extends Fragment {
          * Método para arredondar as temperaturas
          */
         private String formatHighLows(double high, double low) {
-            // For presentation, assume the user doesn't care about tenths of a degree.
             long roundedHigh = Math.round(high);
             long roundedLow = Math.round(low);
 
@@ -131,7 +124,6 @@ public class ForecastFragment extends Fragment {
          */
         private String[] getWeatherDataFromJson(String forecastJsonStr, int numDays) throws JSONException {
 
-            // These are the names of the JSON objects that need to be extracted.
             final String OWM_LIST = "list";
             final String OWM_WEATHER = "weather";
             final String OWM_TEMPERATURE = "temp";
@@ -147,7 +139,7 @@ public class ForecastFragment extends Fragment {
 
             String[] resultStrs = new String[numDays];
             for(int i = 0; i < weatherArray.length(); i++) {
-                // For now, using the format "Day, description, hi/low"
+
                 String day;
                 String description;
                 String highAndLow;
@@ -160,12 +152,9 @@ public class ForecastFragment extends Fragment {
 
                 dayTime.add(Calendar.DAY_OF_WEEK, 1);
 
-                // description is in a child array called "weather", which is 1 element long.
                 JSONObject weatherObject = dayForecast.getJSONArray(OWM_WEATHER).getJSONObject(0);
                 description = weatherObject.getString(OWM_DESCRIPTION);
 
-                // Temperatures are in a child object called "temp".  Try not to name variables
-                // "temp" when working with temperature.  It confuses everybody.
                 JSONObject temperatureObject = dayForecast.getJSONObject(OWM_TEMPERATURE);
                 double high = temperatureObject.getDouble(OWM_MAX);
                 double low = temperatureObject.getDouble(OWM_MIN);
@@ -183,9 +172,7 @@ public class ForecastFragment extends Fragment {
 
         @Override
         public String[] doInBackground(String... params) {
-
-
-            // If there's no zip code, there's nothing to look up.  Verify size of params.
+            
             if (params.length == 0) {
                 return null;
             }
